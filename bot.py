@@ -16,7 +16,7 @@ def run_server():
     app.run(host='0.0.0.0', port=8080)
 
 # ==================== [ কনফিগারেশন ] ====================
-BOT_TOKEN = "8952089627:AAFOZ2INNfwEN5iN750yG1yVNPPW2XW5FlU"
+BOT_TOKEN = "8952089627:AAESGYsmdhRU-d5olkm2-vE5dj2TB8prcwI"
 CRACKERJACK_API_KEY = "Fb1b32e3-a692-4632-a24b-17628dde2de7"
 BASE_URL = "https://crackerjacksms.com/public/api"
 OTP_GROUP_CHAT_ID = "-1003851787435"
