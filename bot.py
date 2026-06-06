@@ -16,7 +16,7 @@ def run_server():
     app.run(host='0.0.0.0', port=8080)
 
 # ==================== [ কনফিগারেশন ] ====================
-BOT_TOKEN = "8952089627:AAESGYsmdhRU-d5olkm2-vE5dj2TBprcwII"
+BOT_TOKEN = "8952089627:AAESGYsmdhRU-d5olkm2-vE5dj2TB8prcwI"
 VOLTX_API_KEY = "MABFLWQ11MY"
 BASE_URL = "https://voltxsms.com/api"
 OTP_GROUP_CHAT_ID = "-1003851787435"
