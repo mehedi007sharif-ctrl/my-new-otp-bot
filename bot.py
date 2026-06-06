@@ -16,7 +16,7 @@ def run_server():
     app.run(host='0.0.0.0', port=8080)
 
 # ==================== [ কনফিগারেশন ] ====================
-# ⚠️ নিচে ডাবল কোটেশনের ভেতরে BotFather থেকে পাওয়া একদম নতুন টোকেনটি পেস্ট করবেন
+# ⚠️ আপনার মাত্রই সেট করা কাজ করা নতুন সচল টোকেনটি নিচে বসাবেন
 BOT_TOKEN = "8952089627:AAHbZ8_ulJGBJKuSJCkHLWS_ouD3azrAnGQ"
 
 VOLTX_API_KEY = "MABFLWQ11MY"
@@ -61,11 +61,13 @@ def callback_listener(call):
         params["country"] = "0"  # Any country
         
         try:
-            response = requests.get(BASE_URL, params=params, timeout=15).json()
+            response = requests.get(BASE_URL, params=params, timeout=15).text
             
-            if response.get("status") == "success" or "number" in response:
-                number = response.get("number")
-                activation_id = response.get("id")
+            # VoltxSMS টেক্সট রেসপন্স চেক: ACCESS_NUMBER:$id:$number
+            if "ACCESS_NUMBER" in response:
+                parts = response.split(":")
+                activation_id = parts[1]
+                number = parts[2]
                 
                 waiting_markup = InlineKeyboardMarkup()
                 btn_sms_cancel = InlineKeyboardButton("❌ Cancel/নাম্বার বাতিল", callback_data=f"cancel_{activation_id}")
@@ -73,14 +75,16 @@ def callback_listener(call):
                 
                 bot.edit_message_text(f"✅ **Number Allocated Successfully!**\n\n📱 Number: `{number}`\n\n💬 Waiting for OTP... ওটিপি কোডের জন্য লাইভ অপেক্ষা করা হচ্ছে...", call.message.chat.id, call.message.message_id, reply_markup=waiting_markup)
                 
-                # লাইভ ওটিপি চেকিং লুপ
+                # লাইভ ওটিپی চেকিং লুপ
                 check_params = {"api_key": VOLTX_API_KEY, "action": "getStatus", "id": activation_id}
                 for _ in range(30):
                     time.sleep(4)
                     try:
-                        otp_response = requests.get(BASE_URL, params=check_params, timeout=15).json()
-                        if otp_response.get("status") == "STATUS_OK" or "sms" in otp_response:
-                            otp_text = otp_response.get("sms") or otp_response.get("text")
+                        otp_response = requests.get(BASE_URL, params=check_params, timeout=15).text
+                        
+                        # VoltxSMS ওটিপি রেসপন্স চেক: STATUS_OK:$sms
+                        if "STATUS_OK" in otp_response:
+                            otp_text = otp_response.split(":")[1]
                             
                             success_msg = f"🎉 **New OTP Received!**\n\n📱 Number: `{number}`\n💬 OTP Message: {otp_text}"
                             
@@ -91,7 +95,7 @@ def callback_listener(call):
                             except Exception as group_err:
                                 print(f"Group send error: {group_err}")
                             return
-                        elif otp_response.get("status") == "STATUS_CANCELLED":
+                        elif "STATUS_CANCELLED" in otp_response:
                             bot.send_message(call.message.chat.id, "❌ নাম্বারটি সিস্টেম থেকে বাতিল হয়ে গেছে।")
                             return
                     except:
@@ -99,7 +103,7 @@ def callback_listener(call):
                 
                 bot.send_message(call.message.chat.id, "❌ Timeout! নির্ধারিত সময়ে কোনো ওটিপি পাওয়া যায়নি।")
             else:
-                bot.edit_message_text("❌ এই মুহূর্তে প্যানেলে কোনো নাম্বার খালি নেই বা পর্যাপ্ত ব্যালেন্স নেই।", call.message.chat.id, call.message.message_id)
+                bot.edit_message_text(f"❌ প্যানেলে সমস্যা অথবা ব্যালেন্স নেই। সার্ভার মেসেজ: {response}", call.message.chat.id, call.message.message_id)
         except Exception as e:
             bot.edit_message_text("⚠️ ভোল্টেক্স এপিআই কানেকশন এরর! আবার চেষ্টা করুন।", call.message.chat.id, call.message.message_id)
             
@@ -110,7 +114,7 @@ def callback_listener(call):
         
         cancel_params = {"api_key": VOLTX_API_KEY, "action": "setStatus", "id": activation_id, "status": "8"}
         try:
-            response = requests.get(BASE_URL, params=cancel_params, timeout=15).json()
+            requests.get(BASE_URL, params=cancel_params, timeout=15)
             bot.send_message(call.message.chat.id, "✅ নাম্বারটি সফলভাবে বাতিল করা হয়েছে।")
         except:
             bot.send_message(call.message.chat.id, "⚠️ রিকোয়েস্টটি সফল করা যায়নি।")
