@@ -1,32 +1,32 @@
 import telebot
 import requests
 import time
+import os
 from threading import Thread
 from flask import Flask
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-# ১. ফ্লাস্ক অ্যাপ তৈরি (রেন্ডার হোস্ティング লাইভ রাখার জন্য)
+# ১. ফ্লাস্ক অ্যাপ তৈরি
 app = Flask('')
 
 @app.route('/')
 def home():
-    return "Premium VoltxSMS Bot is running perfectly!"
+    return "Premium VoltxSMS Bot is running perfectly with high security!"
 
 def run_server():
     app.run(host='0.0.0.0', port=8080)
 
-# ==================== [ কনফিগারেশন ] ====================
-# ⚠️ আপনার মাত্রই সেট করা কাজ করা নতুন সচল টোকেনটি নিচে বসাবেন
-BOT_TOKEN = "8952089627:AAHbZ8_ulJGBJKuSJCkHLWS_ouD3azrAnGQ"
-
-VOLTX_API_KEY = "MABFLWQ11MY"
+# ==================== [ নিরাপদ কনফিগারেশন ] ====================
+# রেন্ডারের এনভায়রনমেন্ট ভ্যারিয়েবল থেকে ডাটা পড়া হচ্ছে
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
+VOLTX_API_KEY = os.environ.get("VOLTX_API_KEY")
 BASE_URL = "https://voltxsms.com/api"
 OTP_GROUP_CHAT_ID = "-1003851787435"
 # ========================================================
 
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode="Markdown")
 
-# 👋 স্টার্ট কমান্ড (সরাসরি ইনলাইন বাটন মেনু দেখাবে)
+# 👋 স্টার্ট কমান্ড
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     show_main_menu(message.chat.id)
@@ -52,18 +52,16 @@ def show_main_menu(chat_id):
 def callback_listener(call):
     params = {"api_key": VOLTX_API_KEY}
     
-    # নাম্বার নেওয়ার বাটন ক্লিক করলে
     if call.data == "get_num":
         bot.edit_message_text("🔄 Processing Request... ভোল্টেক্স সার্ভার থেকে নতুন নাম্বার খোঁজা হচ্ছে...", call.message.chat.id, call.message.message_id)
         
         params["action"] = "getNumber"
-        params["service"] = "wa" # WhatsApp
-        params["country"] = "0"  # Any country
+        params["service"] = "wa" 
+        params["country"] = "0"  
         
         try:
             response = requests.get(BASE_URL, params=params, timeout=15).text
             
-            # VoltxSMS টেক্সট রেসপন্স চেক: ACCESS_NUMBER:$id:$number
             if "ACCESS_NUMBER" in response:
                 parts = response.split(":")
                 activation_id = parts[1]
@@ -75,19 +73,15 @@ def callback_listener(call):
                 
                 bot.edit_message_text(f"✅ **Number Allocated Successfully!**\n\n📱 Number: `{number}`\n\n💬 Waiting for OTP... ওটিপি কোডের জন্য লাইভ অপেক্ষা করা হচ্ছে...", call.message.chat.id, call.message.message_id, reply_markup=waiting_markup)
                 
-                # লাইভ ওটিپی চেকিং লুপ
                 check_params = {"api_key": VOLTX_API_KEY, "action": "getStatus", "id": activation_id}
                 for _ in range(30):
                     time.sleep(4)
                     try:
                         otp_response = requests.get(BASE_URL, params=check_params, timeout=15).text
                         
-                        # VoltxSMS ওটিপি রেসপন্স চেক: STATUS_OK:$sms
                         if "STATUS_OK" in otp_response:
                             otp_text = otp_response.split(":")[1]
-                            
                             success_msg = f"🎉 **New OTP Received!**\n\n📱 Number: `{number}`\n💬 OTP Message: {otp_text}"
-                            
                             bot.send_message(call.message.chat.id, success_msg)
                             
                             try:
@@ -107,7 +101,6 @@ def callback_listener(call):
         except Exception as e:
             bot.edit_message_text("⚠️ ভোল্টেক্স এপিআই কানেকশন এরর! আবার চেষ্টা করুন।", call.message.chat.id, call.message.message_id)
             
-    # নির্দিষ্ট নাম্বার বাতিল বাটন ক্লিক করলে
     elif call.data.startswith("cancel_"):
         activation_id = call.data.split("_")[1]
         bot.answer_callback_query(call.id, "⏳ Cancel Request Processing...")
@@ -119,11 +112,9 @@ def callback_listener(call):
         except:
             bot.send_message(call.message.chat.id, "⚠️ রিকোয়েস্টটি সফল করা যায়নি।")
             
-    # সাধারণ বাতিল বাটন ক্লিক করলে
     elif call.data == "cancel_num":
         bot.answer_callback_query(call.id, "❌ কোনো একটিভ নাম্বার পাওয়া যায়নি।")
             
-    # সার্ভার স্ট্যাটাস বাটন ক্লিক করলে
     elif call.data == "server_status":
         bot.answer_callback_query(call.id, "📊 Checking Live Traffic Status...")
         bot.send_message(call.message.chat.id, "📊 **ACTIVE TRAFFIC REPORT:**\n\n🟢 **WhatsApp Traffic:** High (700+ OTP/min)\n🟢 **Server Status:** VoltxSMS Online & Active")
@@ -132,3 +123,4 @@ if __name__ == "__main__":
     t = Thread(target=run_server)
     t.start()
     bot.infinity_polling(timeout=20, long_polling_timeout=10)
+    
