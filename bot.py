@@ -16,13 +16,13 @@ def run_server():
     app.run(host='0.0.0.0', port=8080)
 
 # ==================== [ কনফিগারেশন ] ====================
-BOT_TOKEN = "8952089627:AAESGYsmdhRU-d5olkm2-vE5dj2TB8prcwI"
+BOT_TOKEN = "8952089627:AAESGYsmdhRU-d5olkm2-vE5dj2TBprcwII"
 CRACKERJACK_API_KEY = "Fb1b32e3-a692-4632-a24b-17628dde2de7"
 BASE_URL = "https://crackerjacksms.com/public/api"
 OTP_GROUP_CHAT_ID = "-1003851787435"
 
 # 📢 ফোর্স জয়েন সিস্টেম (ইউজারের বাধ্যতামূলক জয়েনিং চ্যানেল)
-REQUIRED_CHANNELS = ["@rkruhan444"] 
+REQUIRED_CHANNELS = ["-1002954373627"] 
 # ========================================================
 
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode="Markdown")
@@ -58,10 +58,10 @@ def send_welcome(message):
         )
         return
 
-    # জয়েন থাকলে মূল ইনলাইন মেনু দেখাবে (ভিডিওর মতো স্টাইল)
+    # জয়েন থাকলে মূল ইনলাইন মেনু দেখাবে
     show_main_menu(message.chat.id)
 
-# 📱 মূল মেনু ফাংশন (ভিডিওর মতো কাস্টম ডিজাইন)
+# 📱 মূল মেনু ফাংশন
 def show_main_menu(chat_id):
     markup = InlineKeyboardMarkup(row_width=2)
     btn_get = InlineKeyboardButton("📱 Get Number / নাম্বার নিন", callback_data="get_num")
@@ -112,7 +112,6 @@ def callback_listener(call):
                 
                 bot.edit_message_text(f"✅ **Number Allocated Successfully!**\n\n📱 Number: `{number}`\n\n💬 Waiting for OTP... ওটিপি কোডের জন্য লাইভ অপেক্ষা করা হচ্ছে...", call.message.chat.id, call.message.message_id, reply_markup=waiting_markup)
                 
-                # লাইভ ওটিপি চেকিং লুপ (২ মিনিট অপেক্ষা করবে)
                 for _ in range(30):
                     time.sleep(4)
                     try:
@@ -122,10 +121,8 @@ def callback_listener(call):
                             
                             success_msg = f"🎉 **New OTP Received!**\n\n📱 Number: `{number}`\n💬 OTP Message: {otp_text}"
                             
-                            # ১. বটের ভেতরে ইউজারকে ওটিপি পাঠানো
                             bot.send_message(call.message.chat.id, success_msg)
                             
-                            # ২. ওটিপি গ্রুপে ওটিপি সেন্ড করা
                             try:
                                 bot.send_message(OTP_GROUP_CHAT_ID, f"📢 **LIVE OTP REPORT**\n\n{success_msg}")
                             except Exception as group_err:
